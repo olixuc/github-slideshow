@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>人生设计旅程</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #6366f1;
+      --primary-light: #ede9fe;
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --amber: #f59e0b;
+      --bg: #f5f4f0;
+      --card: #ffffff;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --locked: #9ca3af;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Pages ── */
+    .page { display: none; padding: 20px 20px 88px; }
+    .page.active { display: block; }
+
+    /* ── Bottom Nav ── */
+    .nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      background: #fff; border-top: 1px solid var(--border);
+      display: flex; z-index: 100;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 10px 0; gap: 3px; background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 11px; font-family: inherit;
+      transition: color .2s;
+    }
+    .nav-btn.active { color: var(--primary); }
+    .nav-btn span:first-child { font-size: 22px; }
+
+    /* ── Page header ── */
+    .page-header { margin-bottom: 22px; }
+    .page-header h1 { font-size: 26px; font-weight: 700; margin-bottom: 3px; }
+    .page-header p { font-size: 14px; color: var(--muted); }
+    .greeting { font-size: 22px; font-weight: 700; margin-bottom: 3px; }
+
+    /* ── Progress bar ── */
+    .progress-wrap { margin-bottom: 22px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 7px; }
+    .progress-label span:last-child { color: var(--primary); font-weight: 600; }
+    .progress-track { background: var(--border); border-radius: 99px; height: 8px; overflow: hidden; }
+    .progress-fill {
+      background: linear-gradient(90deg, var(--primary), #818cf8);
+      height: 100%; border-radius: 99px; transition: width .6s ease;
+    }
+
+    /* ── Stage cards ── */
+    .stage-card {
+      background: var(--card); border-radius: 16px; padding: 18px;
+      margin-bottom: 12px; border: 2px solid transparent; transition: all .2s;
+    }
+    .stage-card.completed { border-color: var(--success); opacity: .85; }
+    .stage-card.current   { border-color: var(--primary); box-shadow: 0 4px 20px rgba(99,102,241,.15); }
+    .stage-card.locked    { opacity: .45; }
+
+    .stage-head { display: flex; align-items: center; gap: 12px; }
+    .stage-icon {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; flex-shrink: 0;
+    }
+    .stage-icon.completed { background: var(--success-light); }
+    .stage-icon.current   { background: var(--primary-light); }
+    .stage-icon.locked    { background: #f3f4f6; }
+
+    .stage-meta { flex: 1; }
+    .stage-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .stage-sub   { font-size: 12px; color: var(--muted); }
+
+    .stage-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px;
+    }
+    .stage-badge.completed { background: var(--success-light); color: #16a34a; }
+    .stage-badge.current   { background: var(--primary-light); color: #6d28d9; }
+    .stage-badge.locked    { background: #f3f4f6; color: var(--locked); }
+
+    /* ── Steps ── */
+    .steps { margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+    .step { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
+    .step-dot {
+      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; border: 2px solid var(--border);
+    }
+    .step-dot.done    { background: var(--success); border-color: var(--success); color: #fff; }
+    .step-dot.active  { border-color: var(--primary); background: var(--primary-light); }
+    .step.done-text   { color: var(--muted); text-decoration: line-through; }
+    .step.active-text { color: var(--primary); font-weight: 600; }
+
+    /* ── Today task ── */
+    .today-task {
+      margin-top: 12px; background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+      border-radius: 12px; padding: 14px;
+    }
+    .task-label { font-size: 11px; color: #7c3aed; font-weight: 700; letter-spacing: .5px; margin-bottom: 4px; }
+    .task-text  { font-size: 14px; font-weight: 500; color: #4c1d95; line-height: 1.5; }
+    .task-btn {
+      margin-top: 10px; width: 100%; background: #7c3aed; color: #fff;
+      border: none; border-radius: 8px; padding: 9px; font-size: 13px;
+      font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+    .task-btn:hover { opacity: .9; }
+
+    /* ── Journal cards ── */
+    .journal-card {
+      background: var(--card); border-radius: 16px; padding: 18px;
+      margin-bottom: 14px; cursor: pointer; transition: transform .15s, box-shadow .15s;
+    }
+    .journal-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
+    .jcard-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .jcard-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+    }
+    .jcard-icon.gt  { background: #fef3c7; }
+    .jcard-icon.fl  { background: var(--danger-light); }
+    .jcard-title    { font-size: 17px; font-weight: 600; }
+    .jcard-hint     { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .jcard-plus     { margin-left: auto; font-size: 22px; font-weight: 300; }
+    .jcard-desc     { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .streak-row     { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+    .streak-dots    { display: flex; gap: 3px; }
+    .dot            { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+    .dot.on         { background: var(--amber); }
+
+    /* ── Section title ── */
+    .section-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+
+    /* ── Entry items ── */
+    .entry-item { background: var(--card); border-radius: 12px; padding: 13px 14px; margin-bottom: 8px; display: flex; gap: 11px; }
+    .entry-pip  { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .entry-body {}
+    .entry-text { font-size: 14px; line-height: 1.5; margin-bottom: 3px; }
+    .entry-meta { font-size: 11px; color: var(--muted); }
+
+    /* ── Stats grid ── */
+    .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 22px; }
+    .stat-card { background: var(--card); border-radius: 12px; padding: 14px; text-align: center; }
+    .stat-num  { font-size: 26px; font-weight: 700; }
+    .stat-lbl  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Archive cards ── */
+    .archive-card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 8px; }
+    .archive-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7px; }
+    .archive-title { font-size: 15px; font-weight: 600; }
+    .archive-date  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .archive-body  { font-size: 13px; color: var(--muted); line-height: 1.55;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* ── Modal sheet ── */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; display: none; align-items: flex-end; }
+    .overlay.open { display: flex; }
+    .sheet {
+      background: #fff; border-radius: 24px 24px 0 0; padding: 20px;
+      width: 100%; max-height: 88vh; overflow-y: auto;
+    }
+    .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 99px; margin: 0 auto 18px; }
+    .sheet-title  { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    .sheet-hint   { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+    .chip {
+      background: #f3f4f6; border: none; border-radius: 99px; padding: 6px 12px;
+      font-size: 12px; cursor: pointer; font-family: inherit; color: var(--text); transition: background .15s;
+    }
+    .chip:hover { background: var(--primary-light); color: var(--primary); }
+
+    textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 13px; font-size: 15px; font-family: inherit; resize: none; outline: none;
+      line-height: 1.6; background: #fafafa; color: var(--text); transition: border-color .2s;
+    }
+    textarea:focus { border-color: var(--primary); background: #fff; }
+
+    .btn-save {
+      width: 100%; background: var(--primary); color: #fff;
+      border: none; border-radius: 12px; padding: 14px; font-size: 16px;
+      font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 14px;
+    }
+    .btn-save:hover { opacity: .9; }
+    .btn-cancel {
+      width: 100%; background: none; color: var(--muted); border: none;
+      padding: 11px; font-size: 15px; cursor: pointer; font-family: inherit; margin-top: 6px;
+    }
+
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 36px 0; color: var(--muted); }
+    .empty-icon { font-size: 44px; margin-bottom: 10px; }
+    .empty-text { font-size: 15px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+      background: #1a1a2e; color: #fff; padding: 9px 20px; border-radius: 99px;
+      font-size: 14px; z-index: 500; transition: transform .3s ease; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ JOURNEY PAGE ══════════ -->
+<div class="page active" id="page-journey">
+  <div class="page-header">
+    <div class="greeting" id="greeting">下午好 👋</div>
+    <p>继续你的人生设计之旅</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label"><span>总体进度</span><span>25%</span></div>
+    <div class="progress-track"><div class="progress-fill" style="width:25%"></div></div>
+  </div>
+
+  <!-- Stage 1 -->
+  <div class="stage-card completed">
+    <div class="stage-head">
+      <div class="stage-icon completed">✅</div>
+      <div class="stage-meta">
+        <div class="stage-title">阶段一：认识自己</div>
+        <div class="stage-sub">工作观 · 活力仪表盘 · WLLL 罗盘</div>
+      </div>
+      <span class="stage-badge completed">已完成</span>
+    </div>
+    <div class="steps">
+      <div class="step done-text"><div class="step-dot done">✓</div>完成工作观写作</div>
+      <div class="step done-text"><div class="step-dot done">✓</div>绘制活力仪表盘</div>
+      <div class="step done-text"><div class="step-dot done">✓</div>填写 WLLL 罗盘</div>
+    </div>
+  </div>
+
+  <!-- Stage 2 -->
+  <div class="stage-card current">
+    <div class="stage-head">
+      <div class="stage-icon current">✍️</div>
+      <div class="stage-meta">
+        <div class="stage-title">阶段二：探索方向</div>
+        <div class="stage-sub">人生观 · 好时光日志 · 思维导图</div>
+      </div>
+      <span class="stage-badge current">进行中</span>
+    </div>
+    <div class="steps">
+      <div class="step done-text"><div class="step-dot done">✓</div>开始好时光日志</div>
+      <div class="step active-text"><div class="step-dot active">→</div>完成 Lifeview 写作</div>
+      <div class="step"><div class="step-dot"></div><span style="color:var(--muted)">绘制思维导图</span></div>
+    </div>
+    <div class="today-task">
+      <div class="task-label">✨ 今日任务</div>
+      <div class="task-text">完成你的 Lifeview 写作 — 你相信什么？生命的意义是什么？</div>
+      <button class="task-btn" onclick="openSheet('lifeview')">开始写作 →</button>
+    </div>
+  </div>
+
+  <!-- Stage 3 -->
+  <div class="stage-card locked">
+    <div class="stage-head">
+      <div class="stage-icon locked">🔒</div>
+      <div class="stage-meta">
+        <div class="stage-title">阶段三：设计未来</div>
+        <div class="stage-sub">奥德赛计划 · 三条人生路径</div>
+      </div>
+      <span class="stage-badge locked">未解锁</span>
+    </div>
+  </div>
+
+  <!-- Stage 4 -->
+  <div class="stage-card locked">
+    <div class="stage-head">
+      <div class="stage-icon locked">🔒</div>
+      <div class="stage-meta">
+        <div class="stage-title">阶段四：付诸行动</div>
+        <div class="stage-sub">原型访谈 · 行动计划</div>
+      </div>
+      <span class="stage-badge locked">未解锁</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ JOURNAL PAGE ══════════ -->
+<div class="page" id="page-journal">
+  <div class="page-header">
+    <h1>日志</h1>
+    <p>记录每一天的发现与成长</p>
+  </div>
+
+  <div class="journal-card" onclick="openSheet('goodtime')">
+    <div class="jcard-head">
+      <div class="jcard-icon gt">📓</div>
+      <div>
+        <div class="jcard-title">好时光日志</div>
+        <div class="jcard-hint">今天记录了吗？</div>
+      </div>
+      <div class="jcard-plus" style="color:var(--primary)">＋</div>
+    </div>
+    <div class="jcard-desc">记录让你充满活力或完全投入的时刻 — 什么活动让你感到心流？</div>
+    <div class="streak-row">
+      <span>连续记录</span>
+      <div class="streak-dots" id="streak-dots"></div>
+      <span id="streak-text">0 天</span>
+    </div>
+  </div>
+
+  <div class="journal-card" onclick="openSheet('failure')">
+    <div class="jcard-head">
+      <div class="jcard-icon fl">⚡</div>
+      <div>
+        <div class="jcard-title">失败日志</div>
+        <div class="jcard-hint">随时记录</div>
+      </div>
+      <div class="jcard-plus" style="color:var(--danger)">＋</div>
+    </div>
+    <div class="jcard-desc">诚实记录一次没能成功的尝试 — 你学到了什么？下次会怎么做？</div>
+  </div>
+
+  <div class="section-title">最近记录</div>
+  <div id="entries-list">
+    <div class="empty"><div class="empty-icon">📝</div><div class="empty-text">还没有记录，点击上方开始吧</div></div>
+  </div>
+</div>
+
+<!-- ══════════ MINE PAGE ══════════ -->
+<div class="page" id="page-mine">
+  <div class="page-header">
+    <h1>我的</h1>
+    <p>已完成练习的存档</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="stat-exercises" style="color:var(--primary)">3</div><div class="stat-lbl">已完成</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-journals" style="color:var(--amber)">0</div><div class="stat-lbl">日志条目</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-streak" style="color:var(--success)">0</div><div class="stat-lbl">连续天数</div></div>
+  </div>
+
+  <div class="section-title">已完成练习</div>
+
+  <div class="archive-card">
+    <div class="archive-head">
+      <div><div class="archive-title">工作观写作</div><div class="archive-date">阶段一 · 4月10日</div></div>
+      <span>✅</span>
+    </div>
+    <div class="archive-body">探讨了工作在我生命中的意义，以及我希望通过工作实现什么样的价值...</div>
+  </div>
+  <div class="archive-card">
+    <div class="archive-head">
+      <div><div class="archive-title">活力仪表盘</div><div class="archive-date">阶段一 · 4月12日</div></div>
+      <span>✅</span>
+    </div>
+    <div class="archive-body">记录了一周的活动，发现创意工作和深度思考最让我有活力和参与感...</div>
+  </div>
+  <div class="archive-card">
+    <div class="archive-head">
+      <div><div class="archive-title">WLLL 罗盘</div><div class="archive-date">阶段一 · 4月15日</div></div>
+      <span>✅</span>
+    </div>
+    <div class="archive-body">通过 Work / Love / Play / Learn 四个维度重新审视了当前的生活平衡状态...</div>
+  </div>
+
+  <div id="user-exercises"></div>
+</div>
+
+<!-- ══════════ BOTTOM NAV ══════════ -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchPage('journey',this)"><span>🗺️</span><span>旅程</span></button>
+  <button class="nav-btn"        onclick="switchPage('journal',this)"><span>📓</span><span>日志</span></button>
+  <button class="nav-btn"        onclick="switchPage('mine',this)"><span>📌</span><span>我的</span></button>
+</nav>
+
+<!-- ══════════ SHEET: Good Time ══════════ -->
+<div class="overlay" id="sheet-goodtime">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📓 好时光日志</div>
+    <div class="sheet-hint">记录一个让你充满活力或心流的时刻。越具体越好 ✨</div>
+    <div class="chips">
+      <button class="chip" onclick="addPrompt('goodtime','今天最让我投入的事是...')">💡 最投入的事</button>
+      <button class="chip" onclick="addPrompt('goodtime','这件事让我充满活力，因为...')">⚡ 充满活力</button>
+      <button class="chip" onclick="addPrompt('goodtime','我进入心流状态的时候...')">🌊 心流时刻</button>
+      <button class="chip" onclick="addPrompt('goodtime','我注意到自己在...')">👁 我注意到</button>
+    </div>
+    <textarea id="ta-goodtime" rows="6" placeholder="今天什么时候你感到充实、投入，或者时间飞逝？写下来..."></textarea>
+    <button class="btn-save" onclick="saveEntry('goodtime')">保存记录 ✓</button>
+    <button class="btn-cancel" onclick="closeSheet('goodtime')">取消</button>
+  </div>
+</div>
+
+<!-- ══════════ SHEET: Failure ══════════ -->
+<div class="overlay" id="sheet-failure">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">⚡ 失败日志</div>
+    <div class="sheet-hint">诚实记录一次没能成功的尝试。失败是数据，不是判断 💪</div>
+    <div class="chips">
+      <button class="chip" onclick="addPrompt('failure','我尝试了...但是...')">🎯 发生了什么</button>
+      <button class="chip" onclick="addPrompt('failure','我从中学到...')">📚 我学到了</button>
+      <button class="chip" onclick="addPrompt('failure','下次我会...')">🔄 下次改变</button>
+      <button class="chip" onclick="addPrompt('failure','这件事让我重新思考...')">🤔 重新思考</button>
+    </div>
+    <textarea id="ta-failure" rows="6" placeholder="描述发生了什么，你从中学到了什么..."></textarea>
+    <button class="btn-save" style="background:var(--danger)" onclick="saveEntry('failure')">保存记录 ✓</button>
+    <button class="btn-cancel" onclick="closeSheet('failure')">取消</button>
+  </div>
+</div>
+
+<!-- ══════════ SHEET: Lifeview ══════════ -->
+<div class="overlay" id="sheet-lifeview">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">✍️ Lifeview 写作</div>
+    <div class="sheet-hint">你相信什么？生命的意义是什么？对你来说，活得好意味着什么？</div>
+    <div class="chips">
+      <button class="chip" onclick="addPrompt('lifeview','我相信生命的意义是...')">🌟 生命意义</button>
+      <button class="chip" onclick="addPrompt('lifeview','对我来说，活得好意味着...')">✨ 活得好</button>
+      <button class="chip" onclick="addPrompt('lifeview','我与他人的关系应该...')">👥 人际关系</button>
+      <button class="chip" onclick="addPrompt('lifeview','面对不确定时，我...')">🌊 不确定性</button>
+    </div>
+    <textarea id="ta-lifeview" rows="8" placeholder="自由书写你的人生观，没有标准答案..."></textarea>
+    <button class="btn-save" onclick="saveExercise()">完成写作 ✓</button>
+    <button class="btn-cancel" onclick="closeSheet('lifeview')">稍后再写</button>
+  </div>
+</div>
+
+<!-- ══════════ TOAST ══════════ -->
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ── Data ── */
+  function load() {
+    return JSON.parse(localStorage.getItem('lifedesign') || JSON.stringify({ entries: [], exercises: [], streak: 0, lastGTDate: null }));
+  }
+  function save(d) { localStorage.setItem('lifedesign', JSON.stringify(d)); }
+
+  /* ── Navigation ── */
+  function switchPage(name, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'journal') renderEntries();
+    if (name === 'mine') renderMine();
+  }
+
+  /* ── Sheets ── */
+  function openSheet(name) { document.getElementById('sheet-' + name).classList.add('open'); }
+  function closeSheet(name) { document.getElementById('sheet-' + name).classList.remove('open'); }
+
+  document.querySelectorAll('.overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  function addPrompt(name, text) {
+    const ta = document.getElementById('ta-' + name);
+    if (ta.value && !ta.value.endsWith('\n')) ta.value += '\n';
+    ta.value += text;
+    ta.focus();
+  }
+
+  /* ── Save journal entry ── */
+  function saveEntry(type) {
+    const ta = document.getElementById('ta-' + type);
+    const text = ta.value.trim();
+    if (!text) { showToast('请先写点什么 ✏️'); return; }
+    const d = load();
+    d.entries.unshift({ type, text, date: new Date().toLocaleDateString('zh-CN'), ts: Date.now() });
+    if (type === 'goodtime') {
+      const today = new Date().toDateString();
+      if (d.lastGTDate !== today) {
+        const yest = new Date(); yest.setDate(yest.getDate() - 1);
+        d.streak = d.lastGTDate === yest.toDateString() ? (d.streak || 0) + 1 : 1;
+        d.lastGTDate = today;
+      }
+    }
+    save(d); ta.value = ''; closeSheet(type);
+    showToast('记录已保存 ✓'); renderEntries(); renderMine();
+  }
+
+  /* ── Save exercise ── */
+  function saveExercise() {
+    const ta = document.getElementById('ta-lifeview');
+    const text = ta.value.trim();
+    if (!text) { showToast('请先写点什么 ✏️'); return; }
+    const d = load();
+    d.exercises = d.exercises || [];
+    d.exercises.unshift({ title: 'Lifeview 写作', text, date: new Date().toLocaleDateString('zh-CN') });
+    save(d); ta.value = ''; closeSheet('lifeview');
+    showToast('练习已完成 🎉'); renderMine();
+  }
+
+  /* ── Render entries ── */
+  function renderEntries() {
+    const d = load();
+    const container = document.getElementById('entries-list');
+    if (!d.entries.length) {
+      container.innerHTML = '<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">还没有记录，点击上方开始吧</div></div>';
+    } else {
+      container.innerHTML = d.entries.slice(0, 15).map(e => `
+        <div class="entry-item">
+          <div class="entry-pip" style="background:${e.type==='goodtime'?'#f59e0b':'#ef4444'}"></div>
+          <div class="entry-body">
+            <div class="entry-text">${e.text.replace(/\n/g,'<br>')}</div>
+            <div class="entry-meta">${e.type==='goodtime'?'📓 好时光':'⚡ 失败日志'} · ${e.date}</div>
+          </div>
+        </div>`).join('');
+    }
+    const streak = d.streak || 0;
+    document.getElementById('streak-dots').innerHTML = Array.from({length:7},(_,i)=>`<div class="dot ${i<streak?'on':''}"></div>`).join('');
+    document.getElementById('streak-text').textContent = streak + ' 天';
+  }
+
+  /* ── Render mine ── */
+  function renderMine() {
+    const d = load();
+    document.getElementById('stat-journals').textContent = d.entries.length;
+    document.getElementById('stat-exercises').textContent = 3 + (d.exercises||[]).length;
+    document.getElementById('stat-streak').textContent = d.streak || 0;
+    document.getElementById('user-exercises').innerHTML = (d.exercises||[]).map(ex=>`
+      <div class="archive-card">
+        <div class="archive-head">
+          <div><div class="archive-title">${ex.title}</div><div class="archive-date">阶段二 · ${ex.date}</div></div>
+          <span>✅</span>
+        </div>
+        <div class="archive-body">${ex.text}</div>
+      </div>`).join('');
+  }
+
+  /* ── Toast ── */
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  /* ── Greeting ── */
+  function setGreeting() {
+    const h = new Date().getHours();
+    const g = h<6?'夜深了 🌙':h<12?'早上好 ☀️':h<14?'中午好 🌤️':h<18?'下午好 👋':'晚上好 🌆';
+    document.getElementById('greeting').textContent = g;
+  }
+
+  setGreeting();
+  renderEntries();
+</script>
+</body>
+</html>
